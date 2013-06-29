@@ -4,12 +4,13 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 
+import ar.edu.tadp.firewall.AcceptListener;
+import ar.edu.tadp.firewall.BloqueoListener;
 import ar.edu.tadp.firewall.Firewall;
 import ar.edu.tadp.firewall.Request;
 import ar.edu.tadp.firewall.conditions.AddressType;
 import ar.edu.tadp.firewall.conditions.IPCondition;
 import ar.edu.tadp.firewall.conditions.PortCondition;
-import ar.edu.tadp.firewall.implementations.BasicHandler;
 import ar.edu.tadp.firewall.rules.AceptarAction;
 import ar.edu.tadp.firewall.rules.BloquearAction;
 import ar.edu.tadp.rules.Action;
@@ -25,7 +26,7 @@ import edu.tadp.firewall.firewalll.Regla;
 public class FirewallCreator {
 	private static boolean inited;
 
-	public static Firewall createFirewall(String modelFile) {
+	public static Firewall createFirewall(String modelFile, AcceptListener acceptListener, BloqueoListener bloqueoListener) {
 		if(!inited){
 			init();
 		}
@@ -41,7 +42,7 @@ public class FirewallCreator {
 		firewall.addRule(chain);
 
 		for (Regla rule : e.getReglas()) {
-			chain.add(createRule(rule));
+			chain.add(createRule(rule, acceptListener, bloqueoListener));
 		}
 
 		return firewall;
@@ -52,17 +53,17 @@ public class FirewallCreator {
 		inited = true;
 	}
 
-	private static ar.edu.tadp.rules.Rule<Request> createRule(Regla rule) {
+	private static ar.edu.tadp.rules.Rule<Request> createRule(Regla rule, AcceptListener acceptListener, BloqueoListener bloqueoListener) {
 		Condition<Request> c = createCondition(rule.getCondicion());
-		Action<Request> a = createAction(rule.getAccion());
+		Action<Request> a = createAction(rule.getAccion(), acceptListener, bloqueoListener);
 		return new BasicRule<Request>(c, a);
 	}
 
-	private static Action<Request> createAction(String accion) {
+	private static Action<Request> createAction(String accion, AcceptListener acceptListener, BloqueoListener bloqueoListener) {
 		if (accion.equals("aceptar")) {
-			return new AceptarAction(new BasicHandler());
+			return new AceptarAction(acceptListener);
 		} else {
-			return new BloquearAction(new BasicHandler());
+			return new BloquearAction(bloqueoListener);
 		}
 	}
 
